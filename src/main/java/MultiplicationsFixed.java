@@ -46,7 +46,7 @@ public class MultiplicationsFixed {
             return builder.par(par -> {
                 ArrayList<DRes<SFixed>> inputs = new ArrayList<>();
                 for (int i = 0; i < 2 * n; i++) {
-                    FixedNumeric.using(par).known(new BigInteger(32, random).intValue());
+                    inputs.add(FixedNumeric.using(par).known(random.nextDouble()));
                 }
                 return DRes.of(inputs);
             }).par((par, inputs) -> {

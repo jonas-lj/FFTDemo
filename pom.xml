@@ -131,6 +131,26 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+
+                    <execution>
+                        <id>noise</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>CRTPreprocessing</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>noise-generation</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
 

@@ -46,11 +46,11 @@ import java.util.*;
 public class DemoOnline<OutputT> {
 
     public static final BigInteger SECRET_SHARED_KEY = BigInteger.valueOf(1234);
-    protected static final FieldDefinition DEFAULT_FIELD_LEFT =
+    public static final FieldDefinition DEFAULT_FIELD_LEFT =
             MersennePrimeFieldDefinition.find(64);
-    protected static final FieldDefinition DEFAULT_FIELD_RIGHT = new BigIntegerFieldDefinition(
+    public static final FieldDefinition DEFAULT_FIELD_RIGHT = new BigIntegerFieldDefinition(
             new BigInteger(192, new Random(1234)).nextProbablePrime());
-    protected static final FieldDefinition DEFAULT_FIELD = new BigIntegerFieldDefinition(
+    public static final FieldDefinition DEFAULT_FIELD = new BigIntegerFieldDefinition(
             new BigInteger(256, new Random(1234)).nextProbablePrime());
 
     public void run(int myId, String otherIP1, String otherIP2, Scheme scheme, Application<OutputT, ProtocolBuilderNumeric> application) {

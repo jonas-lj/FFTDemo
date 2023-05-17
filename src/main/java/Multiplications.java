@@ -44,7 +44,7 @@ public class Multiplications {
             return builder.par(par -> {
                 ArrayList<DRes<SInt>> inputs = new ArrayList<>();
                 for (int i = 0; i < 2 * n; i++) {
-                    par.numeric().known(new BigInteger(32, random).intValue());
+                    inputs.add(par.numeric().known(random.nextInt()));
                 }
                 return DRes.of(inputs);
             }).par((par, inputs) -> {
