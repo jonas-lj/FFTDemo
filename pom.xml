@@ -51,6 +51,12 @@
             <artifactId>crt</artifactId>
             <version>${fresco.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>RELEASE</version>
+            <scope>test</scope>
+        </dependency>
 
     </dependencies>
 
@@ -145,6 +151,26 @@
                             </descriptorRefs>
                             <appendAssemblyId>false</appendAssemblyId>
                             <finalName>noise-generation</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+
+                    <execution>
+                        <id>mascot</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>DemoMascot</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>mascot</finalName>
                         </configuration>
                         <phase>package</phase>
                         <goals>
