@@ -42,10 +42,10 @@ public class DemoMascot {
 
     public static void main(String[] arguments) {
         if (arguments.length < 5) {
-            throw new IllegalArgumentException("Usage: java -jar mascot.jar [n] [statSec] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)");
+            throw new IllegalArgumentException("Usage: java -jar mascot.jar [domainInBits] [statSec] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)");
         }
 
-        int n = Integer.parseInt(arguments[0]);
+        int domainInBits = Integer.parseInt(arguments[0]);
         int statsec = Integer.parseInt(arguments[1]);
         DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[2]);
         int myId = Integer.parseInt(arguments[3]);
@@ -53,25 +53,25 @@ public class DemoMascot {
         for (int i = 4; i < arguments.length; i++) {
             otherIPs.add(arguments[i]);
         }
-        run(myId, otherIPs, n, statsec, strategy);
+        run(myId, otherIPs, domainInBits, statsec, strategy);
     }
 
-    public static void run(int myId, List<String> otherIPs, int n, int statsec, DemoOnline.Scheme preprocessingStrategy) {
+    public static void run(int myId, List<String> otherIPs, int domainInBits, int statsec, DemoOnline.Scheme preprocessingStrategy) {
         Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
         Network network =  new NetworkLoggingDecorator(new SocketNetwork(networkConfiguration));
 
         if (preprocessingStrategy == DemoOnline.Scheme.SPDZ) {
             FieldDefinition fieldDefinition =
-                    new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(n));
+                    new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(domainInBits));
             MascotResourcePool resourcePool = defaultResourcePool(myId, parties.size(), fieldDefinition,
                     network);
             FieldElement macKeyShare = resourcePool.getLocalSampler().getNext();
             toClose = (Closeable) network;
             mascots = Arrays.asList(new Mascot(resourcePool, network, macKeyShare));
-            System.out.println("Bits available for computation: " +  n);
+            System.out.println("Bits available for computation: " +  domainInBits);
         } else {
-            CRTFieldParams crtParams = new CRTFieldParams(n, statsec, parties.size());
+            CRTFieldParams crtParams = new CRTFieldParams(domainInBits, statsec, parties.size());
             MascotResourcePool resourcePoolLeft = defaultResourcePool(myId, parties.size(), crtParams.getP(),
                     network);
             MascotResourcePool resourcePoolRight = defaultResourcePool(myId, parties.size(), crtParams.getQ(),

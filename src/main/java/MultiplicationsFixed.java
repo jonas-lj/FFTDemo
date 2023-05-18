@@ -5,7 +5,6 @@ import dk.alexandra.fresco.lib.fixed.FixedNumeric;
 import dk.alexandra.fresco.lib.fixed.SFixed;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -21,13 +20,13 @@ public class MultiplicationsFixed {
         int domainInBits = Integer.parseInt(arguments[0]);
         int statsec = Integer.parseInt(arguments[1]);
         int batchSize = Integer.parseInt(arguments[2]);
-        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[3]);
+        DemoOnline.Scheme scheme = DemoOnline.Scheme.valueOf(arguments[3]);
         int myId = Integer.parseInt(arguments[4]);
         List<String> otherIPs = new ArrayList<>();
         for (int i = 5; i < arguments.length; i++) {
             otherIPs.add(arguments[i]);
         }
-        new DemoOnline<List<BigDecimal>>().run(myId, otherIPs, domainInBits, statsec, batchSize, strategy, new FixedMultiplicationApplication(batchSize));
+        new DemoOnline<List<BigDecimal>>().run(myId, otherIPs, domainInBits, statsec, batchSize, scheme, DemoOnline.Strategy.Dummy, new FixedMultiplicationApplication(batchSize));
     }
 
     /**

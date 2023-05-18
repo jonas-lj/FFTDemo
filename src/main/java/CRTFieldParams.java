@@ -2,9 +2,8 @@ import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefini
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Map;
 
+// TODO should be refactored into the actual CRT code and integrated with the CRTResourcePool
 public class CRTFieldParams {
     private final BigIntegerFieldDefinition p;
     private final BigIntegerFieldDefinition q;

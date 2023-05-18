@@ -2,7 +2,6 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
-import dk.alexandra.fresco.stat.complex.OpenComplex;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -20,13 +19,13 @@ public class Multiplications {
         int domainInBits = Integer.parseInt(arguments[0]);
         int statsec = Integer.parseInt(arguments[1]);
         int batchSize = Integer.parseInt(arguments[2]);
-        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[3]);
+        DemoOnline.Scheme scheme = DemoOnline.Scheme.valueOf(arguments[3]);
         int myId = Integer.parseInt(arguments[4]);
         List<String> otherIPs = new ArrayList<>();
         for (int i = 5; i < arguments.length; i++) {
             otherIPs.add(arguments[i]);
         }
-        new DemoOnline<List<BigInteger>>().run(myId, otherIPs, domainInBits, statsec, batchSize, strategy, new MultiplicationApplication(batchSize));
+        new DemoOnline<List<BigInteger>>().run(myId, otherIPs, domainInBits, statsec, batchSize, scheme, DemoOnline.Strategy.Dummy, new MultiplicationApplication(batchSize));
     }
 
     /**
