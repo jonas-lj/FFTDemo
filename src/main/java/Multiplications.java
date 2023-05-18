@@ -2,6 +2,7 @@ import dk.alexandra.fresco.framework.Application;
 import dk.alexandra.fresco.framework.DRes;
 import dk.alexandra.fresco.framework.builder.numeric.ProtocolBuilderNumeric;
 import dk.alexandra.fresco.framework.value.SInt;
+import dk.alexandra.fresco.stat.complex.OpenComplex;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -12,17 +13,20 @@ import java.util.stream.Collectors;
 public class Multiplications {
 
     public static void main(String[] arguments) {
-        if (arguments.length != 5) {
-            throw new IllegalArgumentException("Usage: java Demo [myId] [otherIP1] [otherIP2] [n] [CRT/SPDZ]");
+        if (arguments.length < 6) {
+            throw new IllegalArgumentException("Usage: java -jar Demo [domainInBits] [statSec] [batchSize] [CRT/SPDZ] [myId] [otherIP1] ([otherIP2] ...)");
         }
 
-        int myId = Integer.parseInt(arguments[0]);
-        String otherIP1 = arguments[1];
-        String otherIP2 = arguments[2];
-        int n = Integer.parseInt(arguments[3]);
-        DemoOnline.Scheme scheme = DemoOnline.Scheme.valueOf(arguments[4]);
-
-        new DemoOnline<List<BigInteger>>().run(myId, otherIP1, otherIP2, scheme, new MultiplicationApplication(n));
+        int domainInBits = Integer.parseInt(arguments[0]);
+        int statsec = Integer.parseInt(arguments[1]);
+        int batchSize = Integer.parseInt(arguments[2]);
+        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[3]);
+        int myId = Integer.parseInt(arguments[4]);
+        List<String> otherIPs = new ArrayList<>();
+        for (int i = 5; i < arguments.length; i++) {
+            otherIPs.add(arguments[i]);
+        }
+        new DemoOnline<List<BigInteger>>().run(myId, otherIPs, domainInBits, statsec, batchSize, strategy, new MultiplicationApplication(batchSize));
     }
 
     /**
@@ -31,11 +35,11 @@ public class Multiplications {
     public static class MultiplicationApplication implements
             Application<List<BigInteger>, ProtocolBuilderNumeric> {
 
-        private final int n;
+        private final int batchSize;
         private final Random random;
 
-        public MultiplicationApplication(int n) {
-            this.n = n;
+        public MultiplicationApplication(int batchSize) {
+            this.batchSize = batchSize;
             this.random = new Random(1234);
         }
 
@@ -43,14 +47,14 @@ public class Multiplications {
         public DRes<List<BigInteger>> buildComputation(ProtocolBuilderNumeric builder) {
             return builder.par(par -> {
                 ArrayList<DRes<SInt>> inputs = new ArrayList<>();
-                for (int i = 0; i < 2 * n; i++) {
+                for (int i = 0; i < 2 * batchSize; i++) {
                     inputs.add(par.numeric().known(random.nextInt()));
                 }
                 return DRes.of(inputs);
             }).par((par, inputs) -> {
                 ArrayList<DRes<SInt>> outputs = new ArrayList<>();
-                for (int i = 0; i < n; i++) {
-                    outputs.add(par.numeric().mult(inputs.get(i), inputs.get(i + n)));
+                for (int i = 0; i < batchSize; i++) {
+                    outputs.add(par.numeric().mult(inputs.get(i), inputs.get(i + batchSize)));
                 }
                 return DRes.of(outputs);
             }).par((par, result) ->

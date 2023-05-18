@@ -44,58 +44,47 @@ import java.util.Map;
 import static dk.alexandra.fresco.suite.crt.datatypes.resource.CRTDataSupplier.DEFAULT_STATSECURITY;
 
 public class CRTPreprocessing {
+    private static final int BATCH_SIZE = 1024;
 
     public enum Strategy {
         Covert, SemiHonest,
     }
 
     public static void main(String[] arguments) {
-        if (arguments.length != 5) {
-            throw new IllegalArgumentException("Usage: java Demo [myId] [otherIP1] [otherIP2] [n] [Covert/SemiHonest]");
+        if (arguments.length < 6) {
+            throw new IllegalArgumentException("Usage: java -jar CRTPreprocessing [domainInBits] [statSec] [batchSize] [Covert/SemiHonest] [myId] [otherIP1] ([otherIP2] ...)");
         }
 
-        int myId = Integer.parseInt(arguments[0]);
-        String otherIP1 = arguments[1];
-        String otherIP2 = arguments[2];
-        int n = Integer.parseInt(arguments[3]);
-
-        Strategy strategy = Strategy.valueOf(arguments[4]);
-
-        run(myId, otherIP1, otherIP2, n, strategy);
+        int domainInBits = Integer.parseInt(arguments[0]);
+        int statsec = Integer.parseInt(arguments[1]);
+        int batchSize = Integer.parseInt(arguments[2]);
+        Strategy strategy = Strategy.valueOf(arguments[3]);
+        int myId = Integer.parseInt(arguments[4]);
+        List<String> otherIPs = new ArrayList<>();
+        for (int i = 5; i < arguments.length; i++) {
+            otherIPs.add(arguments[i]);
+        }
+        run(myId, otherIPs, domainInBits, statsec, batchSize, strategy);
     }
 
-    public static void run(int myId, String otherIP1, String otherIP2, int n, Strategy preprocessingStrategy) {
-
-        Party me = new Party(myId, "localhost", 9000 + myId);
-        Map<Integer, Party> parties = new HashMap<>();
-        parties.put(myId, me);
-
-        List<String> otherIPs = List.of(otherIP1, otherIP2);
-        final List<Integer> otherIds = new ArrayList<>(List.of(1, 2, 3));
-        otherIds.remove(Integer.valueOf(myId));
-        for (int i = 0; i < 2; i++) {
-            int id = otherIds.get(i);
-            parties.put(id, new Party(id, otherIPs.get(i), 9000 + id));
-        }
-        int noParties = 3;
-
-        System.out.println("Parties: " + parties);
-        System.out.println();
+    public static void run(int myId,List<String> otherIPs, int domainInBits, int statsec, int batchSize, Strategy preprocessingStrategy) {
+        Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
 
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
         Network network = new SocketNetwork(networkConfiguration);
 
         BatchEvaluationStrategy<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> strategy =
                 new CRTSequentialStrategy<>();
+        CRTFieldParams crtParams = new CRTFieldParams(domainInBits, statsec, parties.size());
 
-        SpdzDataSupplier supplierLeft = new SpdzDummyDataSupplier(myId, noParties, DemoOnline.DEFAULT_FIELD_LEFT,
+        SpdzDataSupplier supplierLeft = new SpdzDummyDataSupplier(myId, parties.size(), crtParams.getP(),
                 DemoOnline.SECRET_SHARED_KEY);
-        SpdzResourcePool rpLeft = new SpdzResourcePoolImpl(myId, noParties,
+        SpdzResourcePool rpLeft = new SpdzResourcePoolImpl(myId, parties.size(),
                 new SpdzOpenedValueStoreImpl(), supplierLeft,
                 AesCtrDrbg::new);
-        SpdzDataSupplier supplierRight = new SpdzDummyDataSupplier(myId, noParties, DemoOnline.DEFAULT_FIELD_RIGHT,
+        SpdzDataSupplier supplierRight = new SpdzDummyDataSupplier(myId, parties.size(), crtParams.getQ(),
                 DemoOnline.SECRET_SHARED_KEY);
-        SpdzResourcePool rpRight = new SpdzResourcePoolImpl(myId, noParties,
+        SpdzResourcePool rpRight = new SpdzResourcePoolImpl(myId, parties.size(),
                 new SpdzOpenedValueStoreImpl(), supplierRight,
                 AesCtrDrbg::new);
 
@@ -109,14 +98,14 @@ public class CRTPreprocessing {
         }
 
         CRTResourcePool<SpdzResourcePool, SpdzResourcePool> rp =
-                new CRTResourcePoolImpl<>(myId, noParties, dataSupplier, rpLeft, rpRight);
+                new CRTResourcePoolImpl<>(myId, parties.size(), dataSupplier, rpLeft, rpRight);
 
         ProtocolSuiteNumeric<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> ps =
                 new CRTProtocolSuite<>(
-                        new SpdzBuilder(new BasicNumericContext(DemoOnline.DEFAULT_FIELD_LEFT.getBitLength(),
-                                myId, noParties, DemoOnline.DEFAULT_FIELD_LEFT, 16, DEFAULT_STATSECURITY)),
-                        new SpdzBuilder(new BasicNumericContext(DemoOnline.DEFAULT_FIELD_RIGHT.getBitLength(),
-                                myId, noParties, DemoOnline.DEFAULT_FIELD_RIGHT, 16, DEFAULT_STATSECURITY)));
+                        new SpdzBuilder(new BasicNumericContext(crtParams.getP().getBitLength(),
+                                myId, parties.size(), crtParams.getP(), 16, statsec)),
+                        new SpdzBuilder(new BasicNumericContext(crtParams.getQ().getBitLength(),
+                                myId, parties.size(), crtParams.getQ(), 16, statsec)));
         // Logging
         strategy =
                 new BatchEvaluationLoggingDecorator<>(strategy);
@@ -138,7 +127,7 @@ public class CRTPreprocessing {
         Instant start = Instant.now();
 
         sce
-                .runApplication(new PreprocessingApplication(n),
+                .runApplication(new PreprocessingApplication(batchSize, statsec),
                         rp, network, Duration.ofMinutes(30));
 
         System.out.println("================== Metrics ==================");
@@ -153,15 +142,17 @@ public class CRTPreprocessing {
 
     public static class PreprocessingApplication implements Application<List<CRTCombinedPad>, ProtocolBuilderNumeric> {
 
-        private final int n;
+        private final int batchSize;
+        private final int statSec;
 
-        public PreprocessingApplication(int n) {
-            this.n = n;
+        public PreprocessingApplication(int batchSize, int statSec) {
+            this.batchSize = batchSize;
+            this.statSec = statSec;
         }
 
         @Override
         public DRes<List<CRTCombinedPad>> buildComputation(ProtocolBuilderNumeric protocolBuilder) {
-            return protocolBuilder.seq(new SemiHonestNoiseGenerator<>(n, DEFAULT_STATSECURITY));
+            return protocolBuilder.seq(new SemiHonestNoiseGenerator<>(batchSize, statSec));
         }
     }
 

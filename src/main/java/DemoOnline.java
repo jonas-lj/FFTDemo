@@ -15,6 +15,7 @@ import dk.alexandra.fresco.framework.sce.evaluator.BatchEvaluationStrategy;
 import dk.alexandra.fresco.framework.sce.evaluator.BatchedProtocolEvaluator;
 import dk.alexandra.fresco.framework.sce.evaluator.EvaluationStrategy;
 import dk.alexandra.fresco.framework.util.AesCtrDrbg;
+import dk.alexandra.fresco.framework.util.ModulusFinder;
 import dk.alexandra.fresco.lib.field.integer.BasicNumericContext;
 import dk.alexandra.fresco.lib.fixed.AdvancedFixedNumeric;
 import dk.alexandra.fresco.lib.fixed.FixedNumeric;
@@ -46,34 +47,13 @@ import java.util.*;
 public class DemoOnline<OutputT> {
 
     public static final BigInteger SECRET_SHARED_KEY = BigInteger.valueOf(1234);
-    public static final FieldDefinition DEFAULT_FIELD_LEFT =
-            MersennePrimeFieldDefinition.find(64);
-    public static final FieldDefinition DEFAULT_FIELD_RIGHT = new BigIntegerFieldDefinition(
-            new BigInteger(192, new Random(1234)).nextProbablePrime());
-    public static final FieldDefinition DEFAULT_FIELD = new BigIntegerFieldDefinition(
-            new BigInteger(256, new Random(1234)).nextProbablePrime());
 
-    public void run(int myId, String otherIP1, String otherIP2, Scheme scheme, Application<OutputT, ProtocolBuilderNumeric> application) {
+    public void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int batchSize, Scheme scheme, Application<OutputT, ProtocolBuilderNumeric> application) {
 
-        final int modBitLength = 256;
-        final int maxBitLength = 180;
         final int maxBatchSize = 4096;
-
-        Party me = new Party(myId, "localhost", 9000 + myId);
-        Map<Integer, Party> parties = new HashMap<>();
-        parties.put(myId, me);
-
-        List<String> otherIPs = List.of(otherIP1, otherIP2);
-        final List<Integer> otherIds = new ArrayList<>(List.of(1, 2, 3));
-        otherIds.remove(Integer.valueOf(myId));
-        for (int i = 0; i < 2; i++) {
-            int id = otherIds.get(i);
-            parties.put(id, new Party(id, otherIPs.get(i), 9000 + id));
-        }
-        int noParties = 3;
-
-        System.out.println("Parties: " + parties);
-        System.out.println();
+        Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
+        int noParties = parties.size();
+        CRTFieldParams crtParams = new CRTFieldParams(domainInBits, statsec, noParties);
 
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
         Network network = new SocketNetwork(networkConfiguration);
@@ -86,31 +66,31 @@ public class DemoOnline<OutputT> {
                 BatchEvaluationStrategy<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> strategy =
                         new CRTSequentialStrategy<>();
 
-                SpdzDataSupplier supplierLeft = new SpdzDummyDataSupplier(myId, noParties, DEFAULT_FIELD_LEFT,
+                SpdzDataSupplier supplierLeft = new SpdzDummyDataSupplier(myId, noParties, crtParams.getP(),
                         SECRET_SHARED_KEY);
                 SpdzResourcePool rpLeft = new SpdzResourcePoolImpl(myId, noParties,
                         new SpdzOpenedValueStoreImpl(), supplierLeft,
                         AesCtrDrbg::new);
-                SpdzDataSupplier supplierRight = new SpdzDummyDataSupplier(myId, noParties, DEFAULT_FIELD_RIGHT,
+                SpdzDataSupplier supplierRight = new SpdzDummyDataSupplier(myId, noParties, crtParams.getQ(),
                         SECRET_SHARED_KEY);
                 SpdzResourcePool rpRight = new SpdzResourcePoolImpl(myId, noParties,
                         new SpdzOpenedValueStoreImpl(), supplierRight,
                         AesCtrDrbg::new);
 
                 CRTDataSupplier<SpdzResourcePool, SpdzResourcePool> dataSupplier = new CRTDummyDataSupplier<>(myId, noParties, CRTDataSupplier.DEFAULT_STATSECURITY,
-                        DEFAULT_FIELD_LEFT, DEFAULT_FIELD_RIGHT,
-                        x -> Utils.fromBigInteger(DEFAULT_FIELD_LEFT, SECRET_SHARED_KEY, myId, x),
-                        x -> Utils.fromBigInteger(DEFAULT_FIELD_RIGHT, SECRET_SHARED_KEY, myId, x));
+                        crtParams.getP(), crtParams.getQ(),
+                        x -> Utils.fromBigInteger(crtParams.getP(), SECRET_SHARED_KEY, myId, x),
+                        x -> Utils.fromBigInteger(crtParams.getQ(), SECRET_SHARED_KEY, myId, x));
 
                 CRTResourcePool<SpdzResourcePool, SpdzResourcePool> rp =
                         new CRTResourcePoolImpl<>(myId, noParties, dataSupplier, rpLeft, rpRight);
 
                 ProtocolSuiteNumeric<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> ps =
                         new CRTProtocolSuite<>(
-                                new SpdzBuilder(new BasicNumericContext(DEFAULT_FIELD_LEFT.getBitLength(),
-                                        myId, noParties, DEFAULT_FIELD_LEFT, 16, 40)),
-                                new SpdzBuilder(new BasicNumericContext(DEFAULT_FIELD_RIGHT.getBitLength(),
-                                        myId, noParties, DEFAULT_FIELD_RIGHT, 16, 40)));
+                                new SpdzBuilder(new BasicNumericContext(crtParams.getP().getBitLength(),
+                                        myId, noParties, crtParams.getP(), 16, statsec)),
+                                new SpdzBuilder(new BasicNumericContext(crtParams.getQ().getBitLength(),
+                                        myId, noParties, crtParams.getQ(), 16, statsec)));
 
                 // Logging
                 strategy =
@@ -145,10 +125,10 @@ public class DemoOnline<OutputT> {
             }
 
             case SPDZ: {
-                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(maxBitLength);
+                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(domainInBits);
 
                 // Use "dummy" multiplication triples to simulate doing only the online phase
-                SpdzDataSupplier supplier = new SpdzDummyDataSupplier(myId, noParties, DEFAULT_FIELD,
+                SpdzDataSupplier supplier = new SpdzDummyDataSupplier(myId, noParties, new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(domainInBits)),
                         BigInteger.valueOf(1234));
 
                 SpdzResourcePool rp = new SpdzResourcePoolImpl(myId, noParties,

@@ -14,17 +14,20 @@ import java.util.stream.Collectors;
 public class FFTDemoOnline {
 
     public static void main(String[] arguments) {
-        if (arguments.length != 5) {
-            throw new IllegalArgumentException("Usage: java Demo [myId] [otherIP1] [otherIP2] [n] [CRT/SPDZ]");
+        if (arguments.length < 6) {
+            throw new IllegalArgumentException("Usage: java -jar Demo [domainInBits] [statSec] [batchSize] [CRT/SPDZ] [myId] [otherIP1] ([otherIP2] ...)");
         }
 
-        int myId = Integer.parseInt(arguments[0]);
-        String otherIP1 = arguments[1];
-        String otherIP2 = arguments[2];
-        int n = Integer.parseInt(arguments[3]);
-        DemoOnline.Scheme scheme = DemoOnline.Scheme.valueOf(arguments[4]);
-
-        new DemoOnline<List<OpenComplex>>().run(myId, otherIP1, otherIP2, scheme, new FFTApplication(n));
+        int domainInBits = Integer.parseInt(arguments[0]);
+        int statsec = Integer.parseInt(arguments[1]);
+        int batchSize = Integer.parseInt(arguments[2]);
+        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[3]);
+        int myId = Integer.parseInt(arguments[4]);
+        List<String> otherIPs = new ArrayList<>();
+        for (int i = 5; i < arguments.length; i++) {
+            otherIPs.add(arguments[i]);
+        }
+        new DemoOnline<List<OpenComplex>>().run(myId, otherIPs, domainInBits, statsec, batchSize, strategy, new FFTApplication(batchSize));
     }
 
     /**
@@ -33,18 +36,18 @@ public class FFTDemoOnline {
     public static class FFTApplication implements
             Application<List<OpenComplex>, ProtocolBuilderNumeric> {
 
-        private final int n;
+        private final int batchSize;
 
-        public FFTApplication(int n) {
-            this.n = n;
+        public FFTApplication(int batchSize) {
+            this.batchSize = batchSize;
         }
 
         @Override
         public DRes<List<OpenComplex>> buildComputation(ProtocolBuilderNumeric builder) {
             return builder.par(par -> {
                 ArrayList<DRes<SecretComplex>> inputs = new ArrayList<>();
-                for (int i = 0; i < n; i++) {
-                    inputs.add(new SecretComplex(FixedNumeric.using(par).known(i), FixedNumeric.using(par).known(0)));
+                for (int i = 0; i < batchSize; i++) {
+                    inputs.add(new SecretComplex(FixedNumeric.using(par).known(i), FixedNumeric.using(par).known(i)));
                 }
                 return DRes.of(inputs);
             }).seq((seq, inputs) -> new FFT(inputs).buildComputation(seq)).par((par, result) ->

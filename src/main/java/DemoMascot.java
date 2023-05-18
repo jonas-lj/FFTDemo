@@ -57,7 +57,7 @@ public class DemoMascot {
     }
 
     public static void run(int myId, List<String> otherIPs, int n, int statsec, DemoOnline.Scheme preprocessingStrategy) {
-        Map<Integer, Party> parties = setupParties(myId, otherIPs);
+        Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
         Network network =  new NetworkLoggingDecorator(new SocketNetwork(networkConfiguration));
 
@@ -90,23 +90,6 @@ public class DemoMascot {
         System.out.println("Network: " + ((NetworkLoggingDecorator) network).getLoggedValues());
         System.out.println("=============================================");
     }
-
-    public static Map<Integer, Party> setupParties(int myId, List<String> otherIPs) {
-        Party me = new Party(myId, "localhost", 9000 + myId);
-        Map<Integer, Party> parties = new HashMap<>();
-        parties.put(myId, me);
-
-        List<Integer> otherIds = IntStream.range(1, otherIPs.size()+2).boxed().collect(Collectors.toList());
-        otherIds.remove(Integer.valueOf(myId));
-        for (int i = 0; i <otherIds.size(); i++) {
-            int id = otherIds.get(i);
-            parties.put(id, new Party(id, otherIPs.get(i), 9000 + id));
-        }
-        System.out.println("Parties: " + parties.size());
-        System.out.println();
-        return parties;
-    }
-
 
     private static void run(int numIts, int numTriples) {
         for (int i = 0; i < numIts; i++) {
