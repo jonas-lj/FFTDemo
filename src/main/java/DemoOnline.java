@@ -25,6 +25,7 @@ import dk.alexandra.fresco.suite.crt.CRTProtocolSuite;
 import dk.alexandra.fresco.suite.crt.datatypes.resource.*;
 import dk.alexandra.fresco.suite.crt.fixed.CRTAdvancedFixedNumeric;
 import dk.alexandra.fresco.suite.crt.fixed.CRTFixedNumeric;
+import dk.alexandra.fresco.suite.crt.protocols.framework.CRTBatchedStrategy;
 import dk.alexandra.fresco.suite.crt.protocols.framework.CRTSequentialStrategy;
 import dk.alexandra.fresco.suite.spdz.SpdzBuilder;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
@@ -63,7 +64,7 @@ public class DemoOnline<OutputT> {
         switch (scheme) {
             case CRT: {
                 BatchEvaluationStrategy<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> strategy =
-                        new CRTSequentialStrategy<>();
+                        new CRTBatchedStrategy<>();
 
                 SpdzDataSupplier supplierLeft = new SpdzDummyDataSupplier(myId, noParties, crtParams.getP(),
                         SECRET_SHARED_KEY);

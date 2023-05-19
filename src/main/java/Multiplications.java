@@ -49,8 +49,6 @@ public class Multiplications {
                 for (int i = 0; i < 2 * batchSize; i++) {
                     inputs.add(par.numeric().known(random.nextInt()));
                 }
-                return DRes.of(inputs);
-            }).par((par, inputs) -> {
                 ArrayList<DRes<SInt>> outputs = new ArrayList<>();
                 for (int i = 0; i < batchSize; i++) {
                     outputs.add(par.numeric().mult(inputs.get(i), inputs.get(i + batchSize)));
