@@ -26,7 +26,6 @@ import dk.alexandra.fresco.suite.crt.datatypes.resource.*;
 import dk.alexandra.fresco.suite.crt.fixed.CRTAdvancedFixedNumeric;
 import dk.alexandra.fresco.suite.crt.fixed.CRTFixedNumeric;
 import dk.alexandra.fresco.suite.crt.protocols.framework.CRTBatchedStrategy;
-import dk.alexandra.fresco.suite.crt.protocols.framework.CRTSequentialStrategy;
 import dk.alexandra.fresco.suite.spdz.SpdzBuilder;
 import dk.alexandra.fresco.suite.spdz.SpdzProtocolSuite;
 import dk.alexandra.fresco.suite.spdz.SpdzResourcePool;

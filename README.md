@@ -41,5 +41,5 @@ java -jar nose-generation [domainInBits] [statSec] [deterrence] [batchSize] [Cov
 ## mascot
 Tests offline preprocessing of triples
 ```
-java -jar mascot.jar [domainInBits] [statSec] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)
+java -jar mascot.jar [domainInBits] [statSec] [batchSize] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)
 ```

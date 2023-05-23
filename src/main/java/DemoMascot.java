@@ -35,28 +35,28 @@ import java.util.stream.IntStream;
 import static dk.alexandra.fresco.suite.crt.datatypes.resource.CRTDataSupplier.DEFAULT_STATSECURITY;
 
 public class DemoMascot {
-    private static final int TRIPLES = 1024;
     private static List<Mascot> mascots;
     private static Closeable toClose;
     private static MascotSecurityParameters parameters = new MascotSecurityParameters();
 
     public static void main(String[] arguments) {
-        if (arguments.length < 5) {
-            throw new IllegalArgumentException("Usage: java -jar mascot.jar [domainInBits] [statSec] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)");
+        if (arguments.length < 6) {
+            throw new IllegalArgumentException("Usage: java -jar mascot.jar [domainInBits] [statSec] [batchSize] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)");
         }
 
         int domainInBits = Integer.parseInt(arguments[0]);
         int statsec = Integer.parseInt(arguments[1]);
-        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[2]);
-        int myId = Integer.parseInt(arguments[3]);
+        int batchSize = Integer.parseInt(arguments[2]);
+        DemoOnline.Scheme strategy = DemoOnline.Scheme.valueOf(arguments[3]);
+        int myId = Integer.parseInt(arguments[4]);
         List<String> otherIPs = new ArrayList<>();
-        for (int i = 4; i < arguments.length; i++) {
+        for (int i = 5; i < arguments.length; i++) {
             otherIPs.add(arguments[i]);
         }
-        run(myId, otherIPs, domainInBits, statsec, strategy);
+        run(myId, otherIPs, domainInBits, statsec, batchSize, strategy);
     }
 
-    public static void run(int myId, List<String> otherIPs, int domainInBits, int statsec, DemoOnline.Scheme preprocessingStrategy) {
+    public static void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int batchSize, DemoOnline.Scheme preprocessingStrategy) {
         Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
         Network network =  new NetworkLoggingDecorator(new SocketNetwork(networkConfiguration));
@@ -85,7 +85,7 @@ public class DemoMascot {
             System.out.println("Bits in Q: " + crtParams.getQ().getModulus().bitLength());
             System.out.println("Bits available for computation: " +  crtParams.getMaxAllowedValue().bitLength());
         }
-        run(1, TRIPLES);
+        run(1, batchSize);
         System.out.println("================== Metrics ==================");
         System.out.println("Network: " + ((NetworkLoggingDecorator) network).getLoggedValues());
         System.out.println("=============================================");
