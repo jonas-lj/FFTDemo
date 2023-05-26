@@ -1,4 +1,5 @@
 # DemoOnline
+Note that compiling requires a FRESCO jar containing CRT support. This can be compiled from this [repo](https://github.com/jonas-lj/fresco).
 
 Tests CRT.
 In general the parameters are as follows
@@ -33,7 +34,7 @@ java -jar mult [domainInBits] [statSec] [batchSize] [CRT/SPDZ] [myId] [otherIP1]
 ```
 
 ## noise-generation
-Tests generation of needed correlated noise
+Tests generation of n41eeded correlated noise
 ```
 java -jar nose-generation [domainInBits] [statSec] [deterrence] [batchSize] [Covert/SemiHonest] [myId] [otherIP1] ([otherIP2] ...)
 ```
