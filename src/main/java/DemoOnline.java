@@ -41,6 +41,7 @@ import java.util.*;
 
 public class DemoOnline<OutputT> {
     public static final int DEFAULT_DETERRENCE = 2;
+    public static final int PRECISION = 32;
     public static final BigInteger SECRET_SHARED_KEY = BigInteger.valueOf(1234);
 
     public void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int batchSize, Scheme scheme, Strategy preprocessStrategy, Application<OutputT, ProtocolBuilderNumeric> application) {
@@ -49,7 +50,7 @@ public class DemoOnline<OutputT> {
 
     public void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int deterrence, int batchSize, Scheme scheme, Strategy preprocessStrategy, Application<OutputT, ProtocolBuilderNumeric> application) {
 
-        final int maxBatchSize = 4096;
+        final int maxBatchSize = 1024;
         Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
         int noParties = parties.size();
         CRTFieldParams crtParams = new CRTFieldParams(domainInBits, statsec, noParties);
@@ -96,9 +97,9 @@ public class DemoOnline<OutputT> {
                 ProtocolSuiteNumeric<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> ps =
                         new CRTProtocolSuite<>(
                                 new SpdzBuilder(new BasicNumericContext(crtParams.getP().getBitLength(),
-                                        myId, noParties, crtParams.getP(), 16, statsec)),
+                                        myId, noParties, crtParams.getP(), PRECISION, statsec)),
                                 new SpdzBuilder(new BasicNumericContext(crtParams.getQ().getBitLength(),
-                                        myId, noParties, crtParams.getQ(), 16, statsec)));
+                                        myId, noParties, crtParams.getQ(), PRECISION, statsec)));
 
                 // Logging
                 strategy =
@@ -136,7 +137,7 @@ public class DemoOnline<OutputT> {
             }
 
             case SPDZ: {
-                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(domainInBits);
+                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(domainInBits, PRECISION);
 
                 // Use "dummy" multiplication triples to simulate doing only the online phase
                 SpdzDataSupplier supplier = new SpdzDummyDataSupplier(myId, noParties, new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(domainInBits)),
@@ -156,7 +157,7 @@ public class DemoOnline<OutputT> {
 
                 BatchedProtocolEvaluator<SpdzResourcePool> evaluator =
                         new BatchedProtocolEvaluator<>(strategy, suite,
-                                maxBatchSize);
+                                maxBatchSize * PRECISION);
 
                 SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce = new SecureComputationEngineImpl<>(
                         suite, evaluator);
