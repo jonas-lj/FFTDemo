@@ -157,7 +157,7 @@ public class DemoOnline<OutputT> {
 
                 BatchedProtocolEvaluator<SpdzResourcePool> evaluator =
                         new BatchedProtocolEvaluator<>(strategy, suite,
-                                maxBatchSize * PRECISION);
+                                maxBatchSize);
 
                 SecureComputationEngine<SpdzResourcePool, ProtocolBuilderNumeric> sce = new SecureComputationEngineImpl<>(
                         suite, evaluator);
@@ -181,7 +181,7 @@ public class DemoOnline<OutputT> {
 
         System.out.println();
         System.out.println("================== Results ==================");
-        System.out.println(results);
+        System.out.println(results.hashCode());
         System.out.println("=============================================");
         System.out.println("Took " + Duration.between(start, Instant.now()));
     }

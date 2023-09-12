@@ -177,6 +177,26 @@
                             <goal>single</goal>
                         </goals>
                     </execution>
+
+                    <execution>
+                        <id>bitgen</id>
+                        <configuration>
+                            <archive>
+                                <manifest>
+                                    <mainClass>SPDZBitGen</mainClass>
+                                </manifest>
+                            </archive>
+                            <descriptorRefs>
+                                <descriptorRef>jar-with-dependencies</descriptorRef>
+                            </descriptorRefs>
+                            <appendAssemblyId>false</appendAssemblyId>
+                            <finalName>SPDZBitGen</finalName>
+                        </configuration>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
 

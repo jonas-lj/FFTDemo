@@ -34,7 +34,7 @@ java -jar mult [domainInBits] [statSec] [batchSize] [CRT/SPDZ] [myId] [otherIP1]
 ```
 
 ## noise-generation
-Tests generation of n41eeded correlated noise
+Tests generation of needed correlated noise
 ```
 java -jar nose-generation [domainInBits] [statSec] [deterrence] [batchSize] [Covert/SemiHonest] [myId] [otherIP1] ([otherIP2] ...)
 ```
@@ -43,4 +43,10 @@ java -jar nose-generation [domainInBits] [statSec] [deterrence] [batchSize] [Cov
 Tests offline preprocessing of triples
 ```
 java -jar mascot.jar [domainInBits] [statSec] [batchSize] [SPDZ/CRT] [myId] [otherIP1] ([otherIP2] ...)
+```
+
+## BitGen
+Tests offline generation of bits needed for SPDZ truncation
+```
+java -jar SPDZBitGen [domainInBits] [statSec] [batchSize] [myId] [otherIP1] ([otherIP2] ...)
 ```
