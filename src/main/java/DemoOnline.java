@@ -41,7 +41,6 @@ import java.util.*;
 
 public class DemoOnline<OutputT> {
     public static final int DEFAULT_DETERRENCE = 2;
-    public static final int PRECISION = 32;
     public static final BigInteger SECRET_SHARED_KEY = BigInteger.valueOf(1234);
 
     public void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int batchSize, Scheme scheme, Strategy preprocessStrategy, Application<OutputT, ProtocolBuilderNumeric> application) {
@@ -50,9 +49,10 @@ public class DemoOnline<OutputT> {
 
     public void run(int myId, List<String> otherIPs, int domainInBits, int statsec, int deterrence, int batchSize, Scheme scheme, Strategy preprocessStrategy, Application<OutputT, ProtocolBuilderNumeric> application) {
 
-        final int maxBatchSize = 1024;
+        final int maxBatchSize = 4096;
         Map<Integer, Party> parties = Utils.setupParties(myId, otherIPs);
         int noParties = parties.size();
+        // TODO update according to Anne Dortes observation that we miss a bit of sec in the proof
         CRTFieldParams crtParams = new CRTFieldParams(domainInBits, statsec, noParties);
 
         NetworkConfiguration networkConfiguration = new NetworkConfigurationImpl(myId, parties);
@@ -97,9 +97,9 @@ public class DemoOnline<OutputT> {
                 ProtocolSuiteNumeric<CRTResourcePool<SpdzResourcePool, SpdzResourcePool>> ps =
                         new CRTProtocolSuite<>(
                                 new SpdzBuilder(new BasicNumericContext(crtParams.getP().getBitLength(),
-                                        myId, noParties, crtParams.getP(), PRECISION, statsec)),
+                                        myId, noParties, crtParams.getP(), 0, statsec)),
                                 new SpdzBuilder(new BasicNumericContext(crtParams.getQ().getBitLength(),
-                                        myId, noParties, crtParams.getQ(), PRECISION, statsec)));
+                                        myId, noParties, crtParams.getQ(), 0, statsec)));
 
                 // Logging
                 strategy =
@@ -109,7 +109,7 @@ public class DemoOnline<OutputT> {
 
                 ProtocolEvaluator<CRTResourcePool<SpdzResourcePool,
                         SpdzResourcePool>> evaluator =
-                        new BatchedProtocolEvaluator<>(strategy, ps);
+                        new BatchedProtocolEvaluator<>(strategy, ps, maxBatchSize);
 
                 SecureComputationEngine<CRTResourcePool<SpdzResourcePool,
                         SpdzResourcePool>, ProtocolBuilderNumeric> sce =
@@ -137,7 +137,8 @@ public class DemoOnline<OutputT> {
             }
 
             case SPDZ: {
-                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(domainInBits, PRECISION);
+                // Precision is the same as the p modulo
+                ProtocolSuiteNumeric<SpdzResourcePool> suite = new SpdzProtocolSuite(domainInBits, crtParams.getP().getBitLength());
 
                 // Use "dummy" multiplication triples to simulate doing only the online phase
                 SpdzDataSupplier supplier = new SpdzDummyDataSupplier(myId, noParties, new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(domainInBits)),
@@ -167,6 +168,7 @@ public class DemoOnline<OutputT> {
                         .runApplication(application,
                                 rp, network, Duration.ofMinutes(30));
                 System.out.println("Bits available for computation: " +  domainInBits);
+                System.out.println("Precision bits: " + crtParams.getP().getModulus().bitLength());
                 System.out.println("================== Metrics ==================");
                 System.out.println("Evaluation: " + ((BatchEvaluationLoggingDecorator<SpdzResourcePool>) strategy).getLoggedValues());
                 System.out.println("Network: " + ((NetworkLoggingDecorator) network).getLoggedValues());
