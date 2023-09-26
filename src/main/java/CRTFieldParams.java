@@ -53,10 +53,11 @@ public class CRTFieldParams {
     }
 
     private static BigInteger findQ(BigInteger p, int minBitsNeeded) {
-        BigInteger cand = BigInteger.TWO.multiply(p).add(BigInteger.ONE);
+        BigInteger cand = BigInteger.TWO.multiply(p);
         int constSize = minBitsNeeded - cand.bitLength();
         // Ensure cand is of correct size
         cand = cand.multiply(BigInteger.TWO.pow(constSize));
+        cand = cand.add(BigInteger.ONE);
         // Subtract p until we reach a prime
         while (!cand.isProbablePrime(40)) {
             cand = cand.subtract(p);
