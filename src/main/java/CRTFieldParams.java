@@ -60,7 +60,7 @@ public class CRTFieldParams {
         cand = cand.add(BigInteger.ONE);
         // Subtract p until we reach a prime
         while (!cand.isProbablePrime(40)) {
-            cand = cand.subtract(p);
+            cand = cand.add(p);
         }
         return cand;
     }
