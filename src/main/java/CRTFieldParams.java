@@ -2,6 +2,7 @@ import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefini
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 
 import java.math.BigInteger;
+import java.util.Random;
 
 // TODO should be refactored into the actual CRT code and integrated with the CRTResourcePool
 public class CRTFieldParams {
@@ -32,7 +33,7 @@ public class CRTFieldParams {
         BigInteger extraSpace = amountOfFreeSpaceNeeded(p.getModulus(), statSec, parties);
         BigInteger QCand =(BigInteger.TWO.pow(computationSpaceInBits).add(extraSpace)).divide(p.getModulus());
         int adjustedLength = adjustedUpBits(QCand.bitLength());
-        return new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(adjustedLength));
+        return new BigIntegerFieldDefinition(findQ(p.getModulus(), adjustedLength));
     }
 
     protected static BigIntegerFieldDefinition getP(int computationSpaceInBits, int statSec) {
@@ -49,6 +50,18 @@ public class CRTFieldParams {
             minBitsNeeded = adjustedDownBits((computationSpaceInBits-statSec-7)/2);
         }
         return minBitsNeeded;
+    }
+
+    private static BigInteger findQ(BigInteger p, int minBitsNeeded) {
+        BigInteger cand = BigInteger.TWO.multiply(p).add(BigInteger.ONE);
+        int constSize = minBitsNeeded - cand.bitLength();
+        // Ensure cand is of correct size
+        cand = cand.multiply(BigInteger.TWO.pow(constSize));
+        // Subtract p until we reach a prime
+        while (!cand.isProbablePrime(40)) {
+            cand = cand.subtract(p);
+        }
+        return cand;
     }
 
     private static int adjustedDownBits(int minBitsNeeded) {
