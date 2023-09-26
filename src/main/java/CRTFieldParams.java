@@ -2,7 +2,6 @@ import dk.alexandra.fresco.framework.builder.numeric.field.BigIntegerFieldDefini
 import dk.alexandra.fresco.framework.util.ModulusFinder;
 
 import java.math.BigInteger;
-import java.util.Random;
 
 // TODO should be refactored into the actual CRT code and integrated with the CRTResourcePool
 public class CRTFieldParams {
@@ -17,8 +16,8 @@ public class CRTFieldParams {
      * @param parties The number of parties that will be involved in the computation.
      */
     public CRTFieldParams(int computationSpaceInBits, int statisticalSecurity, int parties) {
-        p = getP(computationSpaceInBits, statisticalSecurity);
-        q = getQ(p, computationSpaceInBits, statisticalSecurity, parties);
+        p = computeP(computationSpaceInBits, statisticalSecurity);
+        q = computeQ(p, computationSpaceInBits, statisticalSecurity, parties);
         BigInteger freeSpaceNeeded = amountOfFreeSpaceNeeded(p.getModulus(), statisticalSecurity, parties);
         maxAllowedValue = p.getModulus().multiply(q.getModulus()).subtract(freeSpaceNeeded);
     }
@@ -38,14 +37,14 @@ public class CRTFieldParams {
         return maxAllowedValue;
     }
 
-    protected static BigIntegerFieldDefinition getQ(BigIntegerFieldDefinition p, int computationSpaceInBits, int statSec, int parties) {
+    protected static BigIntegerFieldDefinition computeQ(BigIntegerFieldDefinition p, int computationSpaceInBits, int statSec, int parties) {
         BigInteger extraSpace = amountOfFreeSpaceNeeded(p.getModulus(), statSec, parties);
         BigInteger QCand =(BigInteger.TWO.pow(computationSpaceInBits).add(extraSpace)).divide(p.getModulus());
         int adjustedLength = adjustedUpBits(QCand.bitLength());
         return new BigIntegerFieldDefinition(findQ(p.getModulus(), adjustedLength));
     }
 
-    protected static BigIntegerFieldDefinition getP(int computationSpaceInBits, int statSec) {
+    protected static BigIntegerFieldDefinition computeP(int computationSpaceInBits, int statSec) {
         int minBitsNeeded = minBitsForP(computationSpaceInBits, statSec);
         return new BigIntegerFieldDefinition(ModulusFinder.findSuitableModulus(minBitsNeeded));
     }
