@@ -10,21 +10,30 @@ public class CRTFieldParams {
     private final BigIntegerFieldDefinition q;
     private final BigInteger maxAllowedValue;
 
-    public CRTFieldParams(int computationSpaceInBits, int statSec, int parties) {
-        p = getP(computationSpaceInBits, statSec);
-        q = getQ(p, computationSpaceInBits, statSec, parties);
-        BigInteger freeSpaceNeeded = amountOfFreeSpaceNeeded(p.getModulus(), statSec, parties);
+    /**
+     * Generate field moduli for CRT based on the given parameters.
+     * @param computationSpaceInBits The number of bits needed to represent the largest value that will be used in the computation.
+     * @param statisticalSecurity The statistical security parameter.
+     * @param parties The number of parties that will be involved in the computation.
+     */
+    public CRTFieldParams(int computationSpaceInBits, int statisticalSecurity, int parties) {
+        p = getP(computationSpaceInBits, statisticalSecurity);
+        q = getQ(p, computationSpaceInBits, statisticalSecurity, parties);
+        BigInteger freeSpaceNeeded = amountOfFreeSpaceNeeded(p.getModulus(), statisticalSecurity, parties);
         maxAllowedValue = p.getModulus().multiply(q.getModulus()).subtract(freeSpaceNeeded);
     }
 
+    /** Get the modulus of the smaller of the two fields */
     public BigIntegerFieldDefinition getP() {
         return p;
     }
 
+    /** Get the modulus of the larger of the two fields */
     public BigIntegerFieldDefinition getQ() {
         return q;
     }
 
+    /** Get an upper bound for the largest value that can be used for computation in the CRT field */
     public BigInteger getMaxAllowedValue() {
         return maxAllowedValue;
     }
@@ -53,16 +62,18 @@ public class CRTFieldParams {
     }
 
     private static BigInteger findQ(BigInteger p, int minBitsNeeded) {
-        BigInteger cand = BigInteger.TWO.multiply(p);
-        int constSize = minBitsNeeded - cand.bitLength();
-        // Ensure cand is of correct size
-        cand = cand.multiply(BigInteger.TWO.pow(constSize));
-        cand = cand.add(BigInteger.ONE);
+        // Ensure that q = 1 mod 2p and is of the correct size
+        BigInteger candidate = BigInteger.TWO.multiply(p);
+
+        // Ensure candidate is of correct size
+        candidate = candidate.multiply(BigInteger.TWO.pow(minBitsNeeded - candidate.bitLength()));
+
+        candidate = candidate.add(BigInteger.ONE);
         // Subtract p until we reach a prime
-        while (!cand.isProbablePrime(40)) {
-            cand = cand.subtract(p);
+        while (!candidate.isProbablePrime(40)) {
+            candidate = candidate.subtract(p);
         }
-        return cand;
+        return candidate;
     }
 
     private static int adjustedDownBits(int minBitsNeeded) {
